@@ -1,15 +1,42 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"log"
 
 	"github.com/Tekitori19/hotel-reservation-BE/API"
+	"github.com/Tekitori19/hotel-reservation-BE/types"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func main() {
+const dburi= "mongodb://localhost:27017"
+const dbname = "hotel-reservation"
+const userColl = "users"
 
-	listenAddr := flag.String("listen", ":5000", "listen address")
+func main() {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dburi))	
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx := context.Background()
+	coll := client.Database(dbname).Collection(userColl)
+
+	user := types.User{
+		FirstName: "Dinh",
+		LastName: "Dwcks",
+	}
+	res, err := coll.InsertOne(ctx, user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(client, res)
+
+	listenAddr := flag.String("listen", ":3000", "listen address")
 	flag.Parse()
 
 	app := fiber.New()
@@ -20,9 +47,3 @@ func main() {
 	app.Listen(*listenAddr)
 }
 
-func handleHello(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"msg": "hello world"})
-}
-func handleUser(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"msg": "hello user"})
-}
